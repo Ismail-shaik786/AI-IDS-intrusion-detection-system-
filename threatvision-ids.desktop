@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=ThreatVision AI
+GenericName=IDS & IPS Security Dashboard
+Comment=AI-Powered Network Intrusion Detection & Prevention System
+Exec=xdg-open http://127.0.0.1:5000/
+Icon=/opt/threatvision-ids/dashboard/static/logo.png
+Terminal=false
+Categories=System;Security;Network;Monitor;
+Keywords=security;ids;ips;network;firewall;threat;analytics;
+StartupNotify=false
+X-GNOME-Autostart-enabled=false
