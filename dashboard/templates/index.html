@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ThreatVision AI — Realtime IDS Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.6.1/socket.io.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/style.css">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              background: '#0B0F19', card: '#111827', cyan: '#00E5FF', blue: '#3B82F6',
+              purple: '#8B5CF6', danger: '#EF4444', warning: '#F59E0B', success: '#10B981'
+            },
+            fontFamily: { sans: ['Inter', 'sans-serif'] }
+          }
+        }
+      }
+    </script>
+</head>
+<body class="bg-background text-gray-200 overflow-hidden font-sans flex h-screen">
+
+    <!-- Sidebar -->
+    <aside class="w-64 glass-panel border-r border-gray-800 flex flex-col m-4 rounded-xl relative z-10 shrink-0">
+        <div class="px-6 pt-6 pb-5 flex flex-col items-center border-b border-gray-800 gap-3">
+            <div class="w-16 h-16 rounded-xl overflow-hidden ring-2 ring-cyan/30 shadow-lg shadow-cyan/10">
+                <img src="/static/logo.png" alt="ThreatVision AI Logo" class="w-full h-full object-cover" />
+            </div>
+            <div class="text-center">
+                <h1 class="text-lg font-bold text-white tracking-wider leading-tight">ThreatVision<span class="text-cyan"> AI</span></h1>
+                <span class="text-[11px] text-gray-400 font-medium">Realtime IDS Platform</span>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 py-6 space-y-2">
+            <a href="#" data-tab="dashboard" class="nav-item flex items-center justify-between px-4 py-3 rounded-lg bg-gray-800/80 text-cyan border border-gray-700/50 transition-all">
+                <div class="flex items-center space-x-3"><i data-lucide="activity" class="w-5 h-5"></i><span class="font-medium text-sm">Dashboard</span></div>
+            </a>
+            <a href="#" data-tab="analytics" class="nav-item flex items-center justify-between px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/40 border border-transparent transition-all">
+                <div class="flex items-center space-x-3"><i data-lucide="target" class="w-5 h-5"></i><span class="font-medium text-sm">Threat Analytics</span></div>
+            </a>
+            <a href="#" data-tab="network" class="nav-item flex items-center justify-between px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/40 border border-transparent transition-all">
+                <div class="flex items-center space-x-3"><i data-lucide="globe" class="w-5 h-5"></i><span class="font-medium text-sm">Network Monitor</span></div>
+            </a>
+            <a href="#" data-tab="alerts" class="nav-item flex items-center justify-between px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/40 border border-transparent transition-all">
+                <div class="flex items-center space-x-3"><i data-lucide="alert-triangle" class="w-5 h-5"></i><span class="font-medium text-sm">Live Alerts</span></div>
+                <span id="alert-badge" class="bg-danger text-white text-[10px] font-bold px-2 py-0.5 rounded-full hidden">0</span>
+            </a>
+            <a href="#" data-tab="blacklist" class="nav-item flex items-center justify-between px-4 py-3 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800/40 border border-transparent transition-all">
+                <div class="flex items-center space-x-3"><i data-lucide="shield-off" class="w-5 h-5"></i><span class="font-medium text-sm">Blacklist (IPS)</span></div>
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-screen overflow-hidden">
+        
+        <!-- Top Nav -->
+        <header class="h-20 flex items-center justify-between px-8 bg-transparent border-b border-gray-800/50 shrink-0">
+            <div class="relative w-96">
+                <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                <input type="text" placeholder="Search IPs, alerts, or queries..." class="w-full bg-gray-900/50 border border-gray-800 rounded-lg pl-10 pr-4 py-2 text-sm focus:outline-none focus:border-cyan/50 text-gray-200" />
+            </div>
+
+            <div class="flex items-center space-x-6">
+                <div class="flex items-center space-x-2 text-sm font-medium text-gray-400">
+                    <div class="w-2 h-2 rounded-full bg-success animate-pulse"></div>
+                    <span>System Online</span><span class="mx-2">|</span><span id="current-time" class="font-mono">00:00:00</span>
+                </div>
+                <button class="relative p-2 rounded-lg hover:bg-gray-800 transition-colors">
+                    <i data-lucide="bell" class="w-5 h-5 text-gray-300"></i>
+                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-danger rounded-full animate-ping hidden" id="bell-ping"></span>
+                    <span class="absolute top-1 right-1 w-2.5 h-2.5 bg-danger rounded-full hidden" id="bell-dot"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Views Area -->
+        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar relative">
+            
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="view-section flex flex-col space-y-6">
+                
+                <!-- Hero Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4 shrink-0">
+                    <div class="glass-panel p-5 relative overflow-hidden stat-card">
+                        <div class="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 -mr-8 -mt-8 bg-cyan"></div>
+                        <div class="flex justify-between items-start mb-4 relative z-10"><div class="p-2 rounded-lg bg-gray-800/50 text-cyan"><i data-lucide="target" class="w-5 h-5"></i></div></div>
+                        <div class="relative z-10"><h3 class="text-gray-400 text-sm font-medium mb-1">Total Threats</h3><p id="stat-total" class="text-2xl font-bold">0</p></div>
+                    </div>
+                    <div class="glass-panel p-5 relative overflow-hidden stat-card">
+                        <div class="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 -mr-8 -mt-8 bg-blue"></div>
+                        <div class="flex justify-between items-start mb-4 relative z-10"><div class="p-2 rounded-lg bg-gray-800/50 text-blue"><i data-lucide="wifi" class="w-5 h-5"></i></div></div>
+                        <div class="relative z-10"><h3 class="text-gray-400 text-sm font-medium mb-1">Active Connections</h3><p id="stat-active" class="text-2xl font-bold">0</p></div>
+                    </div>
+                    <div class="glass-panel p-5 relative overflow-hidden stat-card">
+                        <div class="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 -mr-8 -mt-8 bg-success"></div>
+                        <div class="flex justify-between items-start mb-4 relative z-10"><div class="p-2 rounded-lg bg-gray-800/50 text-success"><i data-lucide="shield-check" class="w-5 h-5"></i></div></div>
+                        <div class="relative z-10"><h3 class="text-gray-400 text-sm font-medium mb-1">Blocked Attacks</h3><p id="stat-blocked" class="text-2xl font-bold">0</p></div>
+                    </div>
+                    <div class="glass-panel p-5 relative overflow-hidden stat-card">
+                        <div id="threat-level-glow" class="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 -mr-8 -mt-8 bg-warning"></div>
+                        <div class="flex justify-between items-start mb-4 relative z-10"><div id="threat-level-icon" class="p-2 rounded-lg bg-gray-800/50 text-warning"><i data-lucide="alert-triangle" class="w-5 h-5"></i></div></div>
+                        <div class="relative z-10"><h3 class="text-gray-400 text-sm font-medium mb-1">Threat Level</h3><p id="stat-threat-level" class="text-2xl font-bold">Low</p></div>
+                    </div>
+                    <div class="glass-panel p-5 relative overflow-hidden stat-card">
+                        <div class="absolute top-0 right-0 w-24 h-24 rounded-full blur-3xl opacity-20 -mr-8 -mt-8 bg-purple"></div>
+                        <div class="flex justify-between items-start mb-4 relative z-10"><div class="p-2 rounded-lg bg-gray-800/50 text-purple"><i data-lucide="cpu" class="w-5 h-5"></i></div></div>
+                        <div class="relative z-10"><h3 class="text-gray-400 text-sm font-medium mb-1">Packets Analyzed</h3><p id="packets-analyzed" class="text-2xl font-bold">0</p></div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+                    <div class="lg:col-span-2 space-y-6 flex flex-col">
+                        <div class="glass-panel p-6 h-[350px] shrink-0">
+                            <h2 class="text-lg font-bold text-white mb-4 flex items-center"><i data-lucide="activity" class="w-5 h-5 mr-2 text-blue"></i> Network Traffic Flow</h2>
+                            <div class="w-full h-[260px] relative"><canvas id="trafficChart"></canvas></div>
+                        </div>
+
+                        <div class="glass-panel p-6 flex-1 flex flex-col min-h-[300px]">
+                            <div class="flex justify-between items-center mb-6">
+                                <h2 class="text-lg font-bold text-white flex items-center"><i data-lucide="alert-triangle" class="w-5 h-5 mr-2 text-danger"></i> Live Threat Feed</h2>
+                            </div>
+                            <div class="flex-1 overflow-auto custom-scrollbar pr-2">
+                                <table class="w-full text-sm text-left">
+                                    <thead class="text-xs text-gray-400 uppercase bg-gray-900/50 sticky top-0 z-10 rounded-lg">
+                                        <tr><th class="px-3 py-3">Time</th><th class="px-3 py-3">Source</th><th class="px-3 py-3">Target</th><th class="px-3 py-3">Type</th><th class="px-3 py-3">Severity</th><th class="px-3 py-3">Conf.</th><th class="px-3 py-3">Geo</th><th class="px-3 py-3">Action</th></tr>
+                                    </thead>
+                                    <tbody id="alerts-tbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6 flex flex-col">
+                        <div class="glass-panel p-6 h-[350px] flex flex-col shrink-0">
+                            <h2 class="text-lg font-bold text-white mb-4 flex items-center"><i data-lucide="target" class="w-5 h-5 mr-2 text-purple"></i> Threat Distribution</h2>
+                            <div class="flex-1 relative flex items-center justify-center">
+                                <canvas id="distributionChart" style="max-height: 220px;"></canvas>
+                                <div class="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                                    <span id="dist-total" class="text-2xl font-bold text-white">0</span><span class="text-xs text-gray-400">Attacks</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-panel p-6 shrink-0">
+                            <h2 class="text-lg font-bold text-white mb-4 flex items-center"><i data-lucide="cpu" class="w-5 h-5 mr-2 text-cyan"></i> AI Engine Status</h2>
+                            <div class="space-y-4">
+                                <div class="flex justify-between text-sm"><span class="text-gray-400">Latency</span><span id="ai-latency" class="text-white font-mono">1.2ms</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-gray-400">Accuracy</span><span id="ai-accuracy" class="text-white font-mono">99.4%</span></div>
+                                <div class="flex justify-between text-sm"><span class="text-gray-400">Processing Rate</span><span id="ai-rate" class="text-white font-mono">0 p/s</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Threat Analytics View -->
+            <div id="view-analytics" class="view-section hidden flex-col h-full space-y-6">
+                 <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-2xl font-bold text-white">Deep Threat Analytics</h2>
+                    <button id="export-btn" class="px-4 py-2 bg-blue/10 text-blue border border-blue/30 rounded hover:bg-blue/20 transition-colors">Export CSV</button>
+                 </div>
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div class="glass-panel p-6 h-[300px]"><h3 class="font-bold mb-4">Severity Breakdown</h3><canvas id="sevChart"></canvas></div>
+                     <div class="glass-panel p-6 h-[300px]"><h3 class="font-bold mb-4">Protocol Usage</h3><canvas id="protoChart"></canvas></div>
+                 </div>
+                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1">
+                     <div class="glass-panel p-6 overflow-auto"><h3 class="font-bold mb-4">Top Attacking IPs</h3><table class="w-full text-left"><tbody id="top-ips-table"></tbody></table></div>
+                     <div class="glass-panel p-6 overflow-auto"><h3 class="font-bold mb-4">Targeted Ports</h3><table class="w-full text-left"><tbody id="top-ports-table"></tbody></table></div>
+                     <div class="glass-panel p-6 overflow-auto"><h3 class="font-bold mb-4">Attack Volume</h3><div id="attack-breakdown" class="space-y-4"></div></div>
+                 </div>
+            </div>
+
+            <!-- Network Monitor View -->
+            <div id="view-network" class="view-section hidden flex-col h-full space-y-6">
+                <h2 class="text-2xl font-bold text-white">Network Monitor</h2>
+                <div class="grid grid-cols-3 gap-4">
+                     <div class="glass-panel p-6"><h3 class="text-gray-400">Packets/Sec</h3><p id="net-pps" class="text-3xl font-bold text-blue">0</p></div>
+                     <div class="glass-panel p-6"><h3 class="text-gray-400">Total Analyzed</h3><p id="net-total" class="text-3xl font-bold text-purple">0</p></div>
+                     <div class="glass-panel p-6"><h3 class="text-gray-400">Uptime</h3><p id="net-uptime" class="text-3xl font-bold text-cyan">0</p></div>
+                </div>
+                <div class="grid grid-cols-3 gap-4">
+                     <div class="glass-panel p-6"><h3 class="text-gray-400">TCP Traffic</h3><p id="net-tcp" class="text-2xl font-bold text-white">0</p></div>
+                     <div class="glass-panel p-6"><h3 class="text-gray-400">UDP Traffic</h3><p id="net-udp" class="text-2xl font-bold text-white">0</p></div>
+                     <div class="glass-panel p-6"><h3 class="text-gray-400">ICMP Traffic</h3><p id="net-icmp" class="text-2xl font-bold text-white">0</p></div>
+                </div>
+            </div>
+
+            <!-- Live Alerts View -->
+            <div id="view-alerts" class="view-section hidden flex-col h-full space-y-4">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-white">Alerts History</h2>
+                    <div class="space-x-2">
+                        <button data-filter="ALL" class="px-3 py-1 bg-gray-800 text-gray-300 rounded active-filter">All</button>
+                        <button data-filter="CRITICAL" class="px-3 py-1 bg-danger/10 text-danger border border-danger/30 rounded">Critical</button>
+                        <button data-filter="HIGH" class="px-3 py-1 bg-warning/10 text-warning border border-warning/30 rounded">High</button>
+                    </div>
+                </div>
+                <div class="glass-panel flex-1 overflow-auto p-0">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-900/50 sticky top-0 z-10">
+                            <tr><th class="px-4 py-3">Time</th><th class="px-4 py-3">Source</th><th class="px-4 py-3">Target</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Severity</th><th class="px-4 py-3">Conf.</th><th class="px-4 py-3">Geo</th></tr>
+                        </thead>
+                        <tbody id="full-alerts-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Blacklist View -->
+            <div id="view-blacklist" class="view-section hidden flex-col h-full space-y-4">
+                 <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold text-white">Active Blocklist (IPS)</h2>
+                 </div>
+                 <div class="glass-panel flex-1 overflow-auto p-0">
+                    <table class="w-full text-sm text-left">
+                        <thead class="text-xs text-gray-400 uppercase bg-gray-900/50 sticky top-0 z-10">
+                            <tr><th class="px-4 py-3">IP Address</th><th class="px-4 py-3">Reason</th><th class="px-4 py-3">Type</th><th class="px-4 py-3">Hits</th><th class="px-4 py-3">Action</th></tr>
+                        </thead>
+                        <tbody id="blacklist-table"></tbody>
+                    </table>
+                 </div>
+            </div>
+
+        </div>
+    </main>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>

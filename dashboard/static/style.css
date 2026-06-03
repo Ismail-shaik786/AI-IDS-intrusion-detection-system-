@@ -1,0 +1,52 @@
+/* Base resets and animations */
+.stat-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
+}
+
+.glass-panel {
+    background: rgba(17, 24, 39, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    border-radius: 0.75rem;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #1F2937;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #374151;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); background-color: rgba(239, 68, 68, 0.2); }
+    to { opacity: 1; transform: translateY(0); background-color: transparent; }
+}
+
+.alert-row {
+    animation: slideDown 0.5s ease-out forwards;
+}
+
+/* Pulsing effect for critical alerts */
+@keyframes criticalPulse {
+    0% { background-color: rgba(239, 68, 68, 0.1); }
+    50% { background-color: rgba(239, 68, 68, 0.3); }
+    100% { background-color: rgba(239, 68, 68, 0.1); }
+}
+
+.alert-critical {
+    animation: criticalPulse 2s infinite;
+}

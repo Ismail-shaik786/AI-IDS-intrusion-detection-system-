@@ -1,0 +1,51 @@
+{
+  "142.250.67.46": {
+    "blocked_at": 1779170572.7223647,
+    "reason": "BENIGN",
+    "severity": "LOW",
+    "hits": 5,
+    "permanent": false
+  },
+  "104.18.1.22": {
+    "blocked_at": 1779170576.8034399,
+    "reason": "BENIGN",
+    "severity": "LOW",
+    "hits": 5,
+    "permanent": false
+  },
+  "104.26.2.143": {
+    "blocked_at": 1779170579.9461284,
+    "reason": "BENIGN",
+    "severity": "LOW",
+    "hits": 5,
+    "permanent": false
+  },
+  "34.107.243.93": {
+    "blocked_at": 1779170581.7321014,
+    "reason": "BENIGN",
+    "severity": "LOW",
+    "hits": 5,
+    "permanent": false
+  },
+  "142.251.43.142": {
+    "blocked_at": 1779170581.82247,
+    "reason": "BENIGN",
+    "severity": "LOW",
+    "hits": 5,
+    "permanent": false
+  },
+  "142.250.67.35": {
+    "blocked_at": 1779170729.5889714,
+    "reason": "BENIGN",
+    "severity": "LOW",
+    "hits": 5,
+    "permanent": false
+  },
+  "192.178.211.84": {
+    "blocked_at": 1779170731.9998364,
+    "reason": "BENIGN",
+    "severity": "LOW",
+    "hits": 5,
+    "permanent": false
+  }
+}
